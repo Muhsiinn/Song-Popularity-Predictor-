@@ -67,4 +67,3 @@ Needs pandas, numpy, seaborn, matplotlib.
 - seaborn
 - matplotlib
 
-Standard stuff, nothing fancy.
