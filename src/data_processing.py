@@ -29,8 +29,7 @@ def synthetic_data(df, multiplier_min=0.6, multiplier_max=0.9):
     multiplier = np.random.uniform(multiplier_min, multiplier_max)
     df[numeric_cols] *= multiplier
     
-    # Taking log 
-    df['streams'] = np.log1p(df['streams'])
+    
     
     return df
 

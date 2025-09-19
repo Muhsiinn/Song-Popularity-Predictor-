@@ -1,57 +1,47 @@
 import pandas as pd 
 import numpy as np 
 
-def train_test_split(df, train_ratio=0.6, val_ratio=0.2):
-    n = len(df)
-    n_val = int(n * val_ratio)
-    n_test = int(n * val_ratio)
-    n_train = n - n_val - n_test
-    
-    idx = np.arange(n)
-    np.random.seed(42)
-    np.random.shuffle(idx)
-    
-    df_train = df.iloc[idx[:n_train]].reset_index(drop=True)
-    df_val = df.iloc[idx[n_train:n_train+n_val]].reset_index(drop=True)
-    df_test = df.iloc[idx[n_train+n_val:]].reset_index(drop=True)
-    
-    return df_train, df_val, df_test
 
-
-def train_model(df, feature_cols, target_col='streams'):
-    """Complete training pipeline from dataframe to results"""
-    
-    # Split data
+def train_model(df, feature_cols, target_col='streams', r=0.001):
     n = len(df)
     n_val = int(n * 0.2)
     n_test = int(n * 0.2) 
     n_train = n - n_val - n_test
     
     idx = np.arange(n)
+    np.random.seed(42)
     np.random.shuffle(idx)
     
-    # Extract train/val/test
+    
     train_idx = idx[:n_train]
     val_idx = idx[n_train:n_train+n_val]
     test_idx = idx[n_train+n_val:]
     
-    # Get matrices
+    
     X_train = df.iloc[train_idx][feature_cols].values
     X_val = df.iloc[val_idx][feature_cols].values
+    X_test = df.iloc[test_idx][feature_cols].values
+    
     y_train = df.iloc[train_idx][target_col].values
     y_val = df.iloc[val_idx][target_col].values
+    y_test = df.iloc[test_idx][target_col].values
     
-    # Add bias
+    
     X_train = np.column_stack([np.ones(len(X_train)), X_train])
     X_val = np.column_stack([np.ones(len(X_val)), X_val])
+    X_test = np.column_stack([np.ones(len(X_test)), X_test])
     
-    # Train
+    
     XTX = X_train.T.dot(X_train)
+    XTX = XTX + r * np.eye(XTX.shape[0])
     XTX_inv = np.linalg.inv(XTX)
     w = XTX_inv.dot(X_train.T).dot(y_train)
     
-    # Predict and evaluate
-    y_pred = X_val.dot(w)
-    rmse_score = np.sqrt(np.mean((y_val - y_pred) ** 2))
     
-    return w, rmse_score
+    y_val_pred = X_val.dot(w)
+    y_test_pred = X_test.dot(w)
+    
+    val_rmse = np.sqrt(np.mean((y_val - y_val_pred) ** 2))
+    test_rmse = np.sqrt(np.mean((y_test - y_test_pred) ** 2))
+    
+    return w, val_rmse, test_rmse, y_test, y_test_pred
